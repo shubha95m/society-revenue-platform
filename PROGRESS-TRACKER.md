@@ -17,13 +17,17 @@ Create all UI pages, forms, and navigation flows without backend logic. Submit b
 - [x] Feature branch created: `feature/frontend-ui-setup`
 - [x] Progress tracker created
 
-### 🔄 Task 00.1: Frontend Project Setup (In Progress)
-- [ ] Choose framework (React + Next.js)
-- [ ] Initialize Next.js project
-- [ ] Install dependencies (Tailwind CSS, UI library)
-- [ ] Setup project structure (components, pages, styles)
-- [ ] Configure routing
-- [ ] Create design system (colors, typography, spacing)
+### ✅ Task 00.1: Frontend Project Setup (DONE - Commit #1)
+- [x] Choose framework (React + Next.js 15)
+- [x] Initialize Next.js project with TypeScript
+- [x] Install dependencies (Tailwind CSS 4, shadcn/ui)
+- [x] Install mobile-compatible libs (Zustand, TanStack Query, Zod, React Hook Form)
+- [x] Setup project structure (lib/api, lib/types, lib/store, lib/utils)
+- [x] Configure routing (App Router ready)
+- [x] Create design system (colors in lib/constants)
+- [x] Create API client (axios with interceptors)
+- [x] Create Auth store (Zustand)
+- [x] Define TypeScript types (User, Society, Service, etc.)
 
 ### ⏳ Task 21: Landing Page (Public)
 - [ ] Hero section with headline and CTAs
