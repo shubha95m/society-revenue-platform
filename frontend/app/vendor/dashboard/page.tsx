@@ -1,4 +1,5 @@
 import Link from "next/link";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,30 +10,13 @@ import {
   DollarSign,
   Package,
   Star,
-  Bell,
   CheckCircle,
   Clock,
 } from "lucide-react";
 
 export default function VendorDashboard() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-xl font-bold">Vendor Portal</h1>
-            <span className="text-sm text-gray-500">QuickFix Solutions</span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon">
-              <Bell className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost">Profile</Button>
-          </div>
-        </div>
-      </header>
-
+    <DashboardLayout role="vendor" societyName="QuickFix Solutions" userName="Vendor Admin">
       <div className="container mx-auto px-4 py-8">
         {/* Scale Banner */}
         <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 mb-8">
@@ -312,6 +296,6 @@ export default function VendorDashboard() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

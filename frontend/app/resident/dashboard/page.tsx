@@ -1,4 +1,5 @@
 import Link from "next/link";
+import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -7,30 +8,13 @@ import {
   Package,
   Vote,
   MessageSquare,
-  Bell,
   DollarSign,
   Calendar,
 } from "lucide-react";
 
 export default function ResidentDashboard() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-xl font-bold">Society Revenue Platform</h1>
-            <span className="text-sm text-gray-500">A-304 | Green Valley</span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon">
-              <Bell className="h-5 w-5" />
-            </Button>
-            <Button variant="ghost">Profile</Button>
-          </div>
-        </div>
-      </header>
-
+    <DashboardLayout role="resident" societyName="Green Valley" userName="John Doe">
       <div className="container mx-auto px-4 py-8">
         {/* Savings Banner */}
         <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200 mb-8">
@@ -246,6 +230,6 @@ export default function ResidentDashboard() {
           </CardContent>
         </Card>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }

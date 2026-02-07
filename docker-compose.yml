@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: society-postgres
+    environment:
+      POSTGRES_DB: society_revenue_platform
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: society_dev_password_2026
+      POSTGRES_INITDB_ARGS: "-E UTF8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/database/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      # Optional: Add seed data
+      # - ./backend/database/seeds.sql:/docker-entrypoint-initdb.d/02-seeds.sql
+    networks:
+      - society-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PgAdmin for database management (Optional)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: society-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@societyrevenue.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    networks:
+      - society-network
+    depends_on:
+      - postgres
+
+  # Redis for caching (Optional)
+  redis:
+    image: redis:7-alpine
+    container_name: society-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - society-network
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  society-network:
+    driver: bridge
