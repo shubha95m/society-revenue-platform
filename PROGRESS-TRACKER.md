@@ -307,11 +307,18 @@ Create all UI pages, forms, and navigation flows without backend logic. Submit b
 - [x] Install mobile-compatible stack (Zustand, TanStack Query, Zod, React Hook Form)
 - [x] Create shared lib structure (API client, types, store, constants)
 - [x] Create design system tokens (colors)
-- [x] Install 6 shadcn components (Button, Input, Textarea, Select, Label, Card)
-- [x] Build landing page demo (Task 21 - partial)
+- [x] Install 7 shadcn components (Button, Input, Textarea, Select, Label, Card, Badge)
+- [x] Build landing page with working navigation
+- [x] Build login page
+- [x] Build registration selection page
+- [x] Build society multi-step registration (5 steps with progress bar)
+- [x] Build Resident Dashboard (money-first design)
+- [x] Build Services Marketplace (6 services with pricing/savings)
+- [x] Build Vendor Dashboard (scale-first design)
+- [x] Build Society Admin Dashboard (money-first with 3 key cards)
 - [x] Dev server running at http://localhost:3000
 
-**Commits:** #1 (Foundation), #2 (Landing Page)
+**Commits:** #1 (Foundation), #2 (Landing Page), #3 (Progress), #4 (Navigation), #5 (Dashboards)
 
 ### Sprint 2 (Next)
 - [ ] Authentication UI (login, register, OTP)
