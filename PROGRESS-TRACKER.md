@@ -29,16 +29,16 @@ Create all UI pages, forms, and navigation flows without backend logic. Submit b
 - [x] Create Auth store (Zustand)
 - [x] Define TypeScript types (User, Society, Service, etc.)
 
-### ⏳ Task 21: Landing Page (Public)
-- [ ] Hero section with headline and CTAs
-- [ ] How It Works section (3 steps)
-- [ ] Revenue Sources Explained section
-- [ ] Trust & Ethics section (4 principles)
-- [ ] For Whom section (3 personas)
-- [ ] Savings Calculator (modal/inline)
-- [ ] FAQ section (5 questions)
-- [ ] Final CTA section
-- [ ] Footer with links
+### ✅ Task 21: Landing Page - Demo Version (DONE - Commit #2)
+- [x] Hero section with headline and CTAs
+- [x] How It Works section (3 cards)
+- [x] Trust & Ethics section (4 principles with icons)
+- [x] Final CTA section
+- [x] Footer with links
+- [ ] Revenue Sources Explained section (TODO: Expand)
+- [ ] For Whom section (TODO: Add testimonials)
+- [ ] Savings Calculator (TODO: Add modal with form)
+- [ ] FAQ section (TODO: Add accordion)
 
 ### ⏳ Task 03: Society Onboarding UI
 - [ ] Registration form (multi-step)
@@ -174,13 +174,15 @@ Create all UI pages, forms, and navigation flows without backend logic. Submit b
 
 ## Components Library (Reusable)
 
-### ⏳ Common Components
-- [ ] Button (primary, secondary, outline)
-- [ ] Input fields (text, email, phone, number)
-- [ ] Textarea
-- [ ] Select dropdown
-- [ ] Checkbox
-- [ ] Radio button
+### 🔄 Common Components (In Progress - Commit #2)
+- [x] Button (primary, secondary, outline) - shadcn/ui
+- [x] Input fields (text, email, phone, number) - shadcn/ui
+- [x] Textarea - shadcn/ui
+- [x] Select dropdown - shadcn/ui
+- [x] Label - shadcn/ui
+- [x] Card - shadcn/ui
+- [ ] Checkbox (TODO: Install)
+- [ ] Radio button (TODO: Install)
 - [ ] File upload
 - [ ] Modal/Dialog
 - [ ] Card
@@ -298,14 +300,18 @@ Create all UI pages, forms, and navigation flows without backend logic. Submit b
 
 ## Current Sprint Goals
 
-### Sprint 1 (This Session)
+### Sprint 1 (This Session) ✅ COMPLETED
 - [x] Setup progress tracker
-- [ ] Initialize Next.js project
-- [ ] Setup Tailwind CSS + shadcn/ui
-- [ ] Create basic layout (header, sidebar, footer)
-- [ ] Create design system tokens
-- [ ] Build 5-10 common components
-- [ ] Build landing page (Task 21)
+- [x] Initialize Next.js 15 project with TypeScript
+- [x] Setup Tailwind CSS 4 + shadcn/ui
+- [x] Install mobile-compatible stack (Zustand, TanStack Query, Zod, React Hook Form)
+- [x] Create shared lib structure (API client, types, store, constants)
+- [x] Create design system tokens (colors)
+- [x] Install 6 shadcn components (Button, Input, Textarea, Select, Label, Card)
+- [x] Build landing page demo (Task 21 - partial)
+- [x] Dev server running at http://localhost:3000
+
+**Commits:** #1 (Foundation), #2 (Landing Page)
 
 ### Sprint 2 (Next)
 - [ ] Authentication UI (login, register, OTP)
