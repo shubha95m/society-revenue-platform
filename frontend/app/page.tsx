@@ -18,13 +18,17 @@ export default function LandingPage() {
           No data selling. Opt-in monetization only.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button size="lg" className="text-lg">
-            Calculate Your Society Savings
-            <ArrowRight className="ml-2 h-5 w-5" />
-          </Button>
-          <Button size="lg" variant="outline" className="text-lg">
-            See How It Works
-          </Button>
+          <Link href="/register">
+            <Button size="lg" className="text-lg">
+              Calculate Your Society Savings
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </Link>
+          <Link href="/login">
+            <Button size="lg" variant="outline" className="text-lg">
+              Sign In
+            </Button>
+          </Link>
         </div>
       </section>
 
@@ -99,12 +103,16 @@ export default function LandingPage() {
       <section className="container mx-auto px-4 py-16 text-center">
         <h2 className="text-3xl font-bold mb-6">Ready to Reduce Your Maintenance?</h2>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button size="lg" className="text-lg">
-            Onboard Your Society
-          </Button>
-          <Button size="lg" variant="outline" className="text-lg">
-            Join as Vendor
-          </Button>
+          <Link href="/register/society">
+            <Button size="lg" className="text-lg">
+              Onboard Your Society
+            </Button>
+          </Link>
+          <Link href="/register/vendor">
+            <Button size="lg" variant="outline" className="text-lg">
+              Join as Vendor
+            </Button>
+          </Link>
         </div>
       </section>
 
