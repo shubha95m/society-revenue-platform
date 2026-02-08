@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model users {
+  id            String   @id @db.Uuid
+  email         String   @unique
+  password_hash String
+  name          String
+  role          String
+  status        String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  residents     residents[]
+  vendors       vendors[]
+  societies     societies[]
+}
+
+model societies {
+  id             String   @id @db.Uuid
+  name           String
+  address        String?
+  city           String?
+  state          String?
+  pincode        String?
+  total_units    Int?
+  admin_user_id  String   @db.Uuid
+  status         String
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  users          users    @relation(fields: [admin_user_id], references: [id])
+  residents      residents[]
+  service_societies service_societies[]
+}
+
+model residents {
+  id             String   @id @db.Uuid
+  user_id        String   @db.Uuid
+  society_id     String   @db.Uuid
+  flat_number    String
+  name           String
+  phone          String?
+  status         String
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  users          users      @relation(fields: [user_id], references: [id])
+  societies      societies  @relation(fields: [society_id], references: [id])
+  orders         orders[]
+  complaints     complaints[]
+}
+
+model vendors {
+  id                String   @id @db.Uuid
+  user_id           String   @db.Uuid
+  business_name     String
+  business_type     String?
+  phone             String?
+  gst_number        String?
+  status            String
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+
+  users             users    @relation(fields: [user_id], references: [id])
+  services          services[]
+  orders            orders[]
+}
+
+model services {
+  id             String   @id @db.Uuid
+  vendor_id      String   @db.Uuid
+  name           String
+  description    String?
+  category       String
+  pricing_type   String
+  base_price     Decimal? @db.Decimal(10, 2)
+  status         String
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  vendors        vendors  @relation(fields: [vendor_id], references: [id])
+  orders         orders[]
+  service_societies service_societies[]
+}
+
+model service_societies {
+  id            String   @id @db.Uuid
+  service_id    String   @db.Uuid
+  society_id    String   @db.Uuid
+  status        String
+  created_at    DateTime @default(now())
+
+  services      services  @relation(fields: [service_id], references: [id])
+  societies     societies @relation(fields: [society_id], references: [id])
+}
+
+model orders {
+  id             String   @id @db.Uuid
+  resident_id    String   @db.Uuid
+  service_id     String   @db.Uuid
+  vendor_id      String   @db.Uuid
+  order_number   String   @unique
+  description    String?
+  total_amount   Decimal  @db.Decimal(10, 2)
+  status         String
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  residents      residents @relation(fields: [resident_id], references: [id])
+  services       services  @relation(fields: [service_id], references: [id])
+  vendors        vendors   @relation(fields: [vendor_id], references: [id])
+  transactions   transactions[]
+}
+
+model transactions {
+  id                String   @id @db.Uuid
+  order_id          String   @db.Uuid
+  transaction_type  String
+  amount            Decimal  @db.Decimal(10, 2)
+  payment_method    String?
+  payment_status    String
+  created_at        DateTime @default(now())
+
+  orders            orders   @relation(fields: [order_id], references: [id])
+}
+
+model complaints {
+  id             String   @id @db.Uuid
+  resident_id    String   @db.Uuid
+  subject        String
+  description    String?
+  status         String
+  priority       String?
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  residents      residents @relation(fields: [resident_id], references: [id])
+}
