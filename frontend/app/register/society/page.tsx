@@ -2,22 +2,98 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/lib/store/auth";
+import { authApi } from "@/lib/api/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { ArrowLeft, Check } from "lucide-react";
+import { toast } from "sonner";
+import { convertApiRoleToUserRole, UserStatus } from "@/lib/types";
 
 export default function SocietyRegisterPage() {
-  const [step, setStep] = useState(1);
-  const totalSteps = 5;
+  const router = useRouter();
+  const login = useAuthStore((state) => state.login);
 
-  const nextStep = () => {
-    if (step < totalSteps) setStep(step + 1);
+  const [formData, setFormData] = useState({
+    adminName: "",
+    adminEmail: "",
+    adminPhone: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value,
+    });
   };
 
-  const prevStep = () => {
-    if (step > 1) setStep(step - 1);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    // Validation
+    if (!formData.adminName || !formData.adminEmail || !formData.password) {
+      setError("Please fill all required fields");
+      return;
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await authApi.register({
+        email: formData.adminEmail,
+        password: formData.password,
+        name: formData.adminName,
+        role: "society_admin",
+      });
+
+      if (response.success && response.data) {
+        // Store user and token in Zustand
+        login(
+          {
+            id: response.data.user.id,
+            email: response.data.user.email,
+            name: response.data.user.name,
+            role: convertApiRoleToUserRole(response.data.user.role),
+            phone: formData.adminPhone || "",
+            status: UserStatus.ACTIVE,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+          response.data.session.token
+        );
+
+        toast.success("Registration successful!");
+
+        // Redirect to society dashboard
+        router.push("/society/dashboard");
+      } else {
+        setError(response.error?.message || "Registration failed. Please try again.");
+      }
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.");
+      console.error("Registration error:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -30,189 +106,128 @@ export default function SocietyRegisterPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Register Your Society</CardTitle>
+            <CardTitle>Register as Society Admin</CardTitle>
             <CardDescription>
-              Step {step} of {totalSteps}
+              Create your account to manage your society
             </CardDescription>
-            {/* Progress Bar */}
-            <div className="w-full bg-gray-200 rounded-full h-2 mt-4">
-              <div
-                className="bg-blue-600 h-2 rounded-full transition-all"
-                style={{ width: `${(step / totalSteps) * 100}%` }}
-              />
-            </div>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {/* Step 1: Basic Info */}
-            {step === 1 && (
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Basic Information</h3>
-                <div className="space-y-2">
-                  <Label htmlFor="society-name">Society Name *</Label>
-                  <Input id="society-name" placeholder="Green Valley Apartments" />
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+                  {error}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address">Address *</Label>
-                  <Input id="address" placeholder="123 Main Street" />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="city">City *</Label>
-                    <Input id="city" placeholder="Mumbai" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="pincode">PIN Code *</Label>
-                    <Input id="pincode" placeholder="400001" />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Step 2: Society Details */}
-            {step === 2 && (
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Society Details</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="total-flats">Total Flats *</Label>
-                    <Input id="total-flats" type="number" placeholder="120" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="total-buildings">Total Buildings *</Label>
-                    <Input id="total-buildings" type="number" placeholder="4" />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="amenities">Amenities (comma separated)</Label>
-                  <Input
-                    id="amenities"
-                    placeholder="Swimming Pool, Gym, Clubhouse, Play Area"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="current-maintenance">Current Maintenance per Flat (₹) *</Label>
-                  <Input id="current-maintenance" type="number" placeholder="2500" />
-                </div>
-              </div>
-            )}
-
-            {/* Step 3: Admin Details */}
-            {step === 3 && (
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Admin Details</h3>
-                <div className="space-y-2">
-                  <Label htmlFor="admin-name">Full Name *</Label>
-                  <Input id="admin-name" placeholder="John Doe" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="admin-role">Role in Society *</Label>
-                  <Input id="admin-role" placeholder="Secretary / President / Treasurer" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="admin-email">Email *</Label>
-                  <Input id="admin-email" type="email" placeholder="admin@greenvally.com" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="admin-phone">Phone Number *</Label>
-                  <Input id="admin-phone" type="tel" placeholder="+91 98765 43210" />
-                </div>
-              </div>
-            )}
-
-            {/* Step 4: Documents */}
-            {step === 4 && (
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Upload Documents</h3>
-                <p className="text-sm text-gray-600">
-                  Please upload the following documents for verification
-                </p>
-                <div className="space-y-2">
-                  <Label htmlFor="society-reg">Society Registration Certificate *</Label>
-                  <Input id="society-reg" type="file" accept=".pdf,.jpg,.png" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="admin-id">Admin ID Proof (Aadhaar/PAN) *</Label>
-                  <Input id="admin-id" type="file" accept=".pdf,.jpg,.png" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="society-photo">Society Photo (Optional)</Label>
-                  <Input id="society-photo" type="file" accept=".jpg,.png" />
-                </div>
-              </div>
-            )}
-
-            {/* Step 5: Review */}
-            {step === 5 && (
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Review & Submit</h3>
-                <div className="bg-blue-50 p-4 rounded-lg space-y-3">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Society Name:</span>
-                    <span className="font-semibold">Green Valley Apartments</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Total Flats:</span>
-                    <span className="font-semibold">120</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Current Maintenance:</span>
-                    <span className="font-semibold">₹2,500/flat</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Admin Email:</span>
-                    <span className="font-semibold">admin@greenvally.com</span>
-                  </div>
-                </div>
-                <div className="bg-green-50 border border-green-200 p-4 rounded-lg">
-                  <div className="flex items-start">
-                    <Check className="h-5 w-5 text-green-600 mr-2 mt-0.5" />
-                    <div>
-                      <p className="font-semibold text-green-900">What happens next?</p>
-                      <ul className="text-sm text-green-800 mt-2 space-y-1">
-                        <li>• Our team will verify your documents (1-2 business days)</li>
-                        <li>• You'll receive an email with approval status</li>
-                        <li>• Once approved, you can start onboarding residents</li>
-                        <li>• Start exploring vendor partnerships immediately</li>
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-start space-x-2">
-                  <input type="checkbox" id="terms" className="mt-1" />
-                  <Label htmlFor="terms" className="text-sm">
-                    I agree to the{" "}
-                    <Link href="#" className="text-blue-600 hover:underline">
-                      Terms of Service
-                    </Link>{" "}
-                    and{" "}
-                    <Link href="#" className="text-blue-600 hover:underline">
-                      Privacy Policy
-                    </Link>
-                  </Label>
-                </div>
-              </div>
-            )}
-
-            {/* Navigation Buttons */}
-            <div className="flex justify-between pt-6 border-t">
-              {step > 1 && (
-                <Button variant="outline" onClick={prevStep}>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Previous
-                </Button>
               )}
-              {step < totalSteps ? (
-                <Button onClick={nextStep} className="ml-auto">
-                  Next
-                  <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              ) : (
-                <Button className="ml-auto bg-green-600 hover:bg-green-700">
-                  Submit Application
-                  <Check className="h-4 w-4 ml-2" />
-                </Button>
-              )}
-            </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="adminName">Full Name *</Label>
+                <Input
+                  id="adminName"
+                  placeholder="John Doe"
+                  value={formData.adminName}
+                  onChange={handleInputChange}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="adminEmail">Email Address *</Label>
+                <Input
+                  id="adminEmail"
+                  type="email"
+                  placeholder="admin@yourso ciety.com"
+                  value={formData.adminEmail}
+                  onChange={handleInputChange}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="adminPhone">Phone Number</Label>
+                <Input
+                  id="adminPhone"
+                  type="tel"
+                  placeholder="+91 98765 43210"
+                  value={formData.adminPhone}
+                  onChange={handleInputChange}
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password *</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Minimum 8 characters"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Re-enter your password"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                <div className="flex items-start">
+                  <Check className="h-5 w-5 text-blue-600 mr-2 mt-0.5" />
+                  <div>
+                    <p className="font-semibold text-blue-900">What happens next?</p>
+                    <ul className="text-sm text-blue-800 mt-2 space-y-1">
+                      <li>• Your account will be created</li>
+                      <li>• You can add your society details in the dashboard</li>
+                      <li>• Start inviting residents once setup is complete</li>
+                      <li>• Explore vendor partnerships</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-2">
+                <input type="checkbox" id="terms" required disabled={isLoading} className="mt-1" />
+                <Label htmlFor="terms" className="text-sm">
+                  I agree to the{" "}
+                  <Link href="/terms" className="text-blue-600 hover:underline">
+                    Terms of Service
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="/privacy" className="text-blue-600 hover:underline">
+                    Privacy Policy
+                  </Link>
+                </Label>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-green-600 hover:bg-green-700"
+                size="lg"
+                disabled={isLoading}
+              >
+                {isLoading ? "Creating Account..." : "Create Society Admin Account"}
+                <Check className="h-4 w-4 ml-2" />
+              </Button>
+
+              <div className="text-center text-sm">
+                Already have an account?{" "}
+                <Link href="/login" className="text-blue-600 hover:underline font-semibold">
+                  Sign in here
+                </Link>
+              </div>
+            </form>
           </CardContent>
         </Card>
       </div>

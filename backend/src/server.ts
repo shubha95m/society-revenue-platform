@@ -52,6 +52,7 @@ app.get('/api', (req: Request, res: Response) => {
     endpoints: {
       health: '/health',
       auth: '/api/auth/*',
+      societyRegistration: '/api/society-registration/*',
       resident: '/api/resident/*',
       society: '/api/society/*',
       vendor: '/api/vendor/*',
@@ -65,10 +66,12 @@ app.get('/api', (req: Request, res: Response) => {
 import authRoutes from './routes/auth.routes';
 import residentRoutes from './routes/resident.routes';
 import societyRoutes from './routes/society.routes';
+import societyRegistrationRoutes from './routes/society-registration.routes';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/resident', residentRoutes);
 app.use('/api/society', societyRoutes);
+app.use('/api/society-registration', societyRegistrationRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

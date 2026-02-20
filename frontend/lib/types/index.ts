@@ -150,6 +150,17 @@ export interface Complaint {
   resolvedAt?: string;
 }
 
+// Role conversion helper
+export function convertApiRoleToUserRole(apiRole: string): UserRole {
+  const roleMap: Record<string, UserRole> = {
+    'platform_admin': UserRole.PLATFORM_ADMIN,
+    'society_admin': UserRole.SOCIETY_ADMIN,
+    'resident': UserRole.RESIDENT,
+    'vendor': UserRole.VENDOR,
+  };
+  return roleMap[apiRole] || UserRole.RESIDENT;
+}
+
 // API Response types
 export interface ApiResponse<T = any> {
   success: boolean;

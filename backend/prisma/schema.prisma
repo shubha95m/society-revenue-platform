@@ -7,37 +7,72 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum user_role {
+  platform_admin
+  society_admin
+  resident
+  vendor
+}
+
+enum user_status {
+  pending_verification
+  active
+  suspended
+  inactive
+}
+
+enum society_status {
+  active
+  onboarding
+  suspended
+  inactive
+}
+
 model users {
-  id            String   @id @db.Uuid
-  email         String   @unique
+  id            String      @id @db.Uuid
+  email         String      @unique
   password_hash String
-  name          String
-  role          String
-  status        String
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+  first_name    String
+  last_name     String
+  role          user_role
+  status        user_status @default(pending_verification)
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
 
   residents     residents[]
   vendors       vendors[]
-  societies     societies[]
 }
 
 model societies {
-  id             String   @id @db.Uuid
-  name           String
-  address        String?
-  city           String?
-  state          String?
-  pincode        String?
-  total_units    Int?
-  admin_user_id  String   @db.Uuid
-  status         String
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  id                     String    @id @db.Uuid
+  name                   String
+  slug                   String    @unique
+  registration_number    String?   @unique
+  address_line1          String
+  address_line2          String?
+  city                   String
+  state                  String
+  country                String?   @default("India")
+  pincode                String
+  total_flats            Int
+  total_towers           Int?      @default(1)
+  occupied_flats         Int?      @default(0)
+  admin_name             String?
+  admin_email            String?
+  admin_phone            String?
+  monthly_maintenance_charge Decimal? @db.Decimal(10, 2)
+  current_revenue        Decimal?  @default(0) @db.Decimal(12, 2)
+  total_revenue_generated Decimal? @default(0) @db.Decimal(15, 2)
+  status                 society_status @default(onboarding)
+  subscription_tier      String?   @default("basic")
+  amenities_info         Json?     @default("[]")
+  settings               Json?     @default("{}")
+  created_at             DateTime  @default(now())
+  updated_at             DateTime  @updatedAt
+  deleted_at             DateTime?
 
-  users          users    @relation(fields: [admin_user_id], references: [id])
-  residents      residents[]
-  service_societies service_societies[]
+  residents              residents[]
+  service_societies      service_societies[]
 }
 
 model residents {

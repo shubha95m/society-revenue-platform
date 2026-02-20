@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-import { verifySession } from '../lib/auth';
+import { verifyToken } from '../lib/auth';
 
 const router = Router();
 
@@ -16,7 +16,7 @@ async function requireAuth(req: Request, res: Response, next: any) {
     }
 
     const token = authHeader.substring(7);
-    const session = await verifySession(token);
+    const session = await verifyToken(token);
 
     if (!session) {
       return res.status(401).json({

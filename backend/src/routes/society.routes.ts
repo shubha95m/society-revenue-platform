@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-import { verifySession } from '../lib/auth';
+import { verifyToken } from '../lib/auth';
 
 const router = Router();
 
@@ -16,7 +16,7 @@ async function requireAuth(req: Request, res: Response, next: any) {
     }
 
     const token = authHeader.substring(7);
-    const session = await verifySession(token);
+    const session = await verifyToken(token);
 
     if (!session) {
       return res.status(401).json({
@@ -47,15 +47,15 @@ router.get('/dashboard', requireAuth, async (req: Request, res: Response) => {
   try {
     const session = (req as any).session;
 
-    // Get society info
+    // Get society info using admin email
     const society = await prisma.societies.findFirst({
-      where: { admin_user_id: session.userId },
+      where: { admin_email: session.email },
     });
 
     if (!society) {
       return res.status(404).json({
         success: false,
-        error: { code: 'SOCIETY_NOT_FOUND', message: 'Society not found' },
+        error: { code: 'SOCIETY_NOT_FOUND', message: 'Society not found. Please complete your society setup.' },
       });
     }
 
@@ -83,8 +83,8 @@ router.get('/dashboard', requireAuth, async (req: Request, res: Response) => {
         society: {
           id: society.id,
           name: society.name,
-          address: society.address,
-          totalUnits: society.total_units,
+          address: `${society.address_line1}, ${society.city}, ${society.state} ${society.pincode}`,
+          totalUnits: society.total_flats,
         },
         stats: {
           totalResidents: residents,
@@ -109,13 +109,13 @@ router.get('/residents', requireAuth, async (req: Request, res: Response) => {
     const session = (req as any).session;
 
     const society = await prisma.societies.findFirst({
-      where: { admin_user_id: session.userId },
+      where: { admin_email: session.email },
     });
 
     if (!society) {
       return res.status(404).json({
         success: false,
-        error: { code: 'SOCIETY_NOT_FOUND', message: 'Society not found' },
+        error: { code: 'SOCIETY_NOT_FOUND', message: 'Society not found. Please complete your society setup.' },
       });
     }
 
@@ -125,7 +125,8 @@ router.get('/residents', requireAuth, async (req: Request, res: Response) => {
         users: {
           select: {
             email: true,
-            name: true,
+            first_name: true,
+            last_name: true,
             status: true,
           },
         },
@@ -152,13 +153,13 @@ router.get('/services', requireAuth, async (req: Request, res: Response) => {
     const session = (req as any).session;
 
     const society = await prisma.societies.findFirst({
-      where: { admin_user_id: session.userId },
+      where: { admin_email: session.email },
     });
 
     if (!society) {
       return res.status(404).json({
         success: false,
-        error: { code: 'SOCIETY_NOT_FOUND', message: 'Society not found' },
+        error: { code: 'SOCIETY_NOT_FOUND', message: 'Society not found. Please complete your society setup.' },
       });
     }
 

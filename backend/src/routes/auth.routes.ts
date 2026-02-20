@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-import { hashPassword, verifyPassword, createSession, verifySession } from '../lib/auth';
+import { hashPassword, verifyPassword, createSession, createToken, verifyToken } from '../lib/auth';
 
 const router = Router();
 
@@ -29,19 +29,31 @@ router.post('/register', async (req: Request, res: Response) => {
     // Hash password
     const passwordHash = await hashPassword(password);
 
+    // Split name into first and last name
+    const nameParts = name.trim().split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+
     // Create user
     const user = await prisma.users.create({
       data: {
+        id: crypto.randomUUID(),
         email,
         password_hash: passwordHash,
-        name,
+        first_name: firstName,
+        last_name: lastName,
         role,
         status: 'active',
       },
     });
 
-    // Create session
-    const session = await createSession(user.id, role);
+    // Create session and token
+    const session = createSession({
+      id: user.id,
+      email: user.email,
+      role: user.role as any,
+    });
+    const token = await createToken(session);
 
     res.status(201).json({
       success: true,
@@ -49,10 +61,14 @@ router.post('/register', async (req: Request, res: Response) => {
         user: {
           id: user.id,
           email: user.email,
-          name: user.name,
+          name: `${user.first_name} ${user.last_name}`.trim(),
           role: user.role,
         },
-        session,
+        session: {
+          token,
+          expiresAt: session.expiresAt,
+          lastActivityAt: session.lastActivityAt,
+        },
       },
     });
   } catch (error: any) {
@@ -102,8 +118,13 @@ router.post('/login', async (req: Request, res: Response) => {
       });
     }
 
-    // Create session
-    const session = await createSession(user.id, user.role);
+    // Create session and token
+    const session = createSession({
+      id: user.id,
+      email: user.email,
+      role: user.role as any,
+    });
+    const token = await createToken(session);
 
     res.json({
       success: true,
@@ -111,10 +132,14 @@ router.post('/login', async (req: Request, res: Response) => {
         user: {
           id: user.id,
           email: user.email,
-          name: user.name,
+          name: `${user.first_name} ${user.last_name}`.trim(),
           role: user.role,
         },
-        session,
+        session: {
+          token,
+          expiresAt: session.expiresAt,
+          lastActivityAt: session.lastActivityAt,
+        },
       },
     });
   } catch (error: any) {
@@ -138,7 +163,7 @@ router.get('/session', async (req: Request, res: Response) => {
     }
 
     const token = authHeader.substring(7);
-    const session = await verifySession(token);
+    const session = await verifyToken(token);
 
     if (!session) {
       return res.status(401).json({

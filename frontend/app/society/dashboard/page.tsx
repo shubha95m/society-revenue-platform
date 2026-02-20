@@ -1,4 +1,8 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import DashboardLayout from "@/components/layouts/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,263 +18,308 @@ import {
   Vote,
   MessageSquare,
 } from "lucide-react";
+import { societyApi, type SocietyDashboardData } from "@/lib/api/society";
+import { useAuthStore } from "@/lib/store/auth";
+import { UserRole } from "@/lib/types";
 
 export default function SocietyAdminDashboard() {
-  return (
-    <DashboardLayout role="society" societyName="Green Valley" userName="Admin">
-      <div className="container mx-auto px-4 py-8">
-        {/* Money First - Main Banner */}
-        <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200 mb-8">
-          <CardContent className="py-8">
-            <div className="text-center">
-              <p className="text-sm text-gray-600 mb-2">This Month's Achievement</p>
-              <h2 className="text-5xl font-bold text-green-600 mb-2">
-                ₹1,42,000 <span className="text-2xl text-gray-600">(47%)</span>
-              </h2>
-              <p className="text-lg text-gray-700 font-semibold mb-4">
-                Maintenance Offset This Month
-              </p>
-              <p className="text-sm text-gray-600">
-                Generated via vendor commissions, amenity rentals, and service marketplace
-              </p>
+  const user = useAuthStore((state) => state.user);
+  const [dashboardData, setDashboardData] = useState<SocietyDashboardData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await societyApi.getDashboard();
+
+      if (response.success && response.data) {
+        setDashboardData(response.data);
+      } else {
+        setError(response.error?.message || "Failed to load dashboard");
+      }
+
+      setIsLoading(false);
+    };
+
+    fetchDashboard();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <ProtectedRoute allowedRoles={[UserRole.SOCIETY_ADMIN]}>
+        <DashboardLayout role="society" societyName="Loading..." userName={user?.name || "Admin"}>
+          <div className="container mx-auto px-4 py-8">
+            <div className="flex items-center justify-center min-h-[400px]">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading dashboard...</p>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </DashboardLayout>
+      </ProtectedRoute>
+    );
+  }
 
-        {/* Three Key Cards */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          {/* Money In */}
-          <Card className="border-green-200">
-            <CardHeader>
-              <CardTitle className="flex items-center text-green-700">
-                <TrendingUp className="h-5 w-5 mr-2" />
-                Money In
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600 mb-4">₹2,80,000</div>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Vendor commissions:</span>
-                  <span className="font-semibold">₹1,10,000 (39%)</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Amenity rentals:</span>
-                  <span className="font-semibold">₹70,000 (25%)</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Maintenance collected:</span>
-                  <span className="font-semibold">₹1,00,000 (36%)</span>
-                </div>
-              </div>
-              <Badge className="mt-4 bg-green-100 text-green-700">↑ 12% vs last month</Badge>
-            </CardContent>
-          </Card>
+  if (error) {
+    return (
+      <ProtectedRoute allowedRoles={[UserRole.SOCIETY_ADMIN]}>
+        <DashboardLayout role="society" societyName="Error" userName={user?.name || "Admin"}>
+          <div className="container mx-auto px-4 py-8">
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+              {error}
+            </div>
+          </div>
+        </DashboardLayout>
+      </ProtectedRoute>
+    );
+  }
 
-          {/* Money Out */}
-          <Card className="border-red-200">
-            <CardHeader>
-              <CardTitle className="flex items-center text-red-700">
-                <TrendingDown className="h-5 w-5 mr-2" />
-                Money Out
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-red-600 mb-4">₹1,38,000</div>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Salaries:</span>
-                  <span className="font-semibold">₹70,000 (51%)</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Utilities:</span>
-                  <span className="font-semibold">₹40,000 (29%)</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Repairs:</span>
-                  <span className="font-semibold">₹28,000 (20%)</span>
-                </div>
-              </div>
-              <Badge className="mt-4 bg-green-100 text-green-700">↓ 5% vs last month</Badge>
-            </CardContent>
-          </Card>
+  // Calculate derived values from API data
+  const totalRevenue = dashboardData?.stats.totalRevenue || 0;
+  const revenuePerFlat = dashboardData?.society.totalUnits
+    ? (totalRevenue / dashboardData.society.totalUnits).toFixed(0)
+    : 0;
 
-          {/* Net Impact */}
-          <Card className="border-blue-200 bg-blue-50">
-            <CardHeader>
-              <CardTitle className="flex items-center text-blue-700">
-                <DollarSign className="h-5 w-5 mr-2" />
-                Net Impact
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-600 mb-4">₹1,42,000</div>
-              <div className="space-y-3">
-                <div className="bg-white p-3 rounded-lg">
-                  <p className="text-sm text-gray-600 mb-1">Surplus this month</p>
-                  <p className="text-lg font-semibold">Maintenance reduced by</p>
-                  <p className="text-2xl font-bold text-green-600">₹473/flat</p>
-                </div>
-                <div className="text-sm">
-                  <span className="text-gray-600">Year-to-date savings:</span>
-                  <span className="font-semibold ml-2">₹9,80,000</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Actions Needed & Stats */}
-        <div className="grid lg:grid-cols-2 gap-8 mb-8">
-          {/* Actions Needed */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>Actions Needed</span>
-                <Badge variant="destructive">7</Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg">
-                  <div className="flex items-center">
-                    <Users className="h-5 w-5 text-orange-600 mr-3" />
-                    <div>
-                      <p className="font-semibold">3 residents waiting approval</p>
-                      <p className="text-sm text-gray-600">Pending verification</p>
-                    </div>
-                  </div>
-                  <Button size="sm">Review</Button>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-purple-50 rounded-lg">
-                  <div className="flex items-center">
-                    <Package className="h-5 w-5 text-purple-600 mr-3" />
-                    <div>
-                      <p className="font-semibold">2 vendor requests pending</p>
-                      <p className="text-sm text-gray-600">New partnership proposals</p>
-                    </div>
-                  </div>
-                  <Button size="sm">Review</Button>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
-                  <div className="flex items-center">
-                    <Vote className="h-5 w-5 text-blue-600 mr-3" />
-                    <div>
-                      <p className="font-semibold">1 active vote</p>
-                      <p className="text-sm text-gray-600">Solar panel installation - ending in 2 days</p>
-                    </div>
-                  </div>
-                  <Button size="sm">View</Button>
-                </div>
-
-                <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
-                  <div className="flex items-center">
-                    <FileText className="h-5 w-5 text-green-600 mr-3" />
-                    <div>
-                      <p className="font-semibold">1 expense proposal awaiting approval</p>
-                      <p className="text-sm text-gray-600">Lift maintenance - ₹45,000</p>
-                    </div>
-                  </div>
-                  <Button size="sm">Review</Button>
-                </div>
+  return (
+    <ProtectedRoute allowedRoles={[UserRole.SOCIETY_ADMIN]}>
+      <DashboardLayout
+        role="society"
+        societyName={dashboardData?.society.name || "Society"}
+        userName={user?.name || "Admin"}
+      >
+        <div className="container mx-auto px-4 py-8">
+          {/* Money First - Main Banner */}
+          <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-green-200 mb-8">
+            <CardContent className="py-8">
+              <div className="text-center">
+                <p className="text-sm text-gray-600 mb-2">Total Revenue Generated</p>
+                <h2 className="text-5xl font-bold text-green-600 mb-2">
+                  ₹{totalRevenue.toLocaleString()}
+                </h2>
+                <p className="text-lg text-gray-700 font-semibold mb-4">
+                  From Completed Orders
+                </p>
+                <p className="text-sm text-gray-600">
+                  ₹{revenuePerFlat} per flat • {dashboardData?.stats.totalOrders || 0} total orders
+                </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* Resident Engagement */}
-          <Card>
+          {/* Key Stats Grid */}
+          <div className="grid md:grid-cols-4 gap-6 mb-8">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center text-blue-700">
+                  <Users className="h-5 w-5 mr-2" />
+                  Residents
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-blue-600">
+                  {dashboardData?.stats.totalResidents || 0}
+                </div>
+                <p className="text-sm text-gray-600 mt-2">
+                  Total residents in society
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center text-purple-700">
+                  <Package className="h-5 w-5 mr-2" />
+                  Active Services
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-purple-600">
+                  {dashboardData?.stats.activeServices || 0}
+                </div>
+                <p className="text-sm text-gray-600 mt-2">
+                  Services available to residents
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center text-green-700">
+                  <FileText className="h-5 w-5 mr-2" />
+                  Total Orders
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-green-600">
+                  {dashboardData?.stats.totalOrders || 0}
+                </div>
+                <p className="text-sm text-gray-600 mt-2">
+                  All-time orders
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center text-orange-700">
+                  <DollarSign className="h-5 w-5 mr-2" />
+                  Total Revenue
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-orange-600">
+                  ₹{totalRevenue.toLocaleString()}
+                </div>
+                <p className="text-sm text-gray-600 mt-2">
+                  From completed orders
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Society Information */}
+          <Card className="mb-8">
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Users className="h-5 w-5 mr-2" />
-                Resident Engagement
+                <Building2 className="h-5 w-5 mr-2" />
+                Society Information
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-gray-600">Active residents:</span>
-                    <span className="font-semibold">78/120 (65%)</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-blue-600 h-2 rounded-full" style={{ width: "65%" }} />
-                  </div>
+                  <p className="text-sm text-gray-600">Society Name</p>
+                  <p className="font-semibold">{dashboardData?.society.name || "N/A"}</p>
                 </div>
-
                 <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-gray-600">Service adoption:</span>
-                    <span className="font-semibold">52%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-green-600 h-2 rounded-full" style={{ width: "52%" }} />
-                  </div>
+                  <p className="text-sm text-gray-600">Address</p>
+                  <p className="font-semibold">{dashboardData?.society.address || "N/A"}</p>
                 </div>
-
                 <div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-sm text-gray-600">Voting participation:</span>
-                    <span className="font-semibold">68%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div className="bg-purple-600 h-2 rounded-full" style={{ width: "68%" }} />
-                  </div>
+                  <p className="text-sm text-gray-600">Total Units</p>
+                  <p className="font-semibold">{dashboardData?.society.totalUnits || "N/A"}</p>
                 </div>
-
-                <div className="pt-4 border-t">
-                  <p className="text-sm text-gray-600 mb-2">Top engagement drivers:</p>
-                  <ul className="text-sm space-y-1">
-                    <li>• Milk delivery service (89 active subscribers)</li>
-                    <li>• Plumbing on-demand (45 bookings this month)</li>
-                    <li>• Clubhouse bookings (12 events)</li>
-                  </ul>
+                <div>
+                  <p className="text-sm text-gray-600">Revenue per Unit</p>
+                  <p className="font-semibold text-green-600">₹{revenuePerFlat}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
+
+          {/* Getting Started - Show only when no data */}
+          {dashboardData?.stats.totalResidents === 0 && (
+            <Card className="mb-8 border-blue-200 bg-blue-50">
+              <CardHeader>
+                <CardTitle className="flex items-center text-blue-900">
+                  <Building2 className="h-5 w-5 mr-2" />
+                  Welcome! Let's Get Started
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="p-4 bg-white rounded-lg border border-blue-200">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-blue-600 text-white font-bold">
+                          1
+                        </div>
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="font-semibold text-gray-900">Update Society Details</h3>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Add complete information about your society, including address, total flats, and amenities.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-white rounded-lg border border-blue-200">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-blue-600 text-white font-bold">
+                          2
+                        </div>
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="font-semibold text-gray-900">Invite Residents</h3>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Start inviting residents to join the platform and access services.
+                        </p>
+                        <Link href="/society/residents">
+                          <Button size="sm" className="mt-2">Manage Residents</Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-white rounded-lg border border-blue-200">
+                    <div className="flex items-start">
+                      <div className="flex-shrink-0">
+                        <div className="flex items-center justify-center h-8 w-8 rounded-full bg-blue-600 text-white font-bold">
+                          3
+                        </div>
+                      </div>
+                      <div className="ml-4">
+                        <h3 className="font-semibold text-gray-900">Partner with Vendors</h3>
+                        <p className="text-sm text-gray-600 mt-1">
+                          Add vendor services to generate revenue from resident bookings.
+                        </p>
+                        <Link href="/society/vendors">
+                          <Button size="sm" className="mt-2">Manage Vendors</Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Quick Links */}
+          <div className="grid md:grid-cols-4 gap-4">
+            <Link href="/society/residents">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <CardContent className="py-6 text-center">
+                  <Users className="h-8 w-8 mx-auto mb-2 text-blue-600" />
+                  <p className="font-semibold">Manage Residents</p>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/society/vendors">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <CardContent className="py-6 text-center">
+                  <Package className="h-8 w-8 mx-auto mb-2 text-purple-600" />
+                  <p className="font-semibold">Manage Vendors</p>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/society/ledger">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <CardContent className="py-6 text-center">
+                  <FileText className="h-8 w-8 mx-auto mb-2 text-green-600" />
+                  <p className="font-semibold">Financial Ledger</p>
+                </CardContent>
+              </Card>
+            </Link>
+
+            <Link href="/society/reports">
+              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
+                <CardContent className="py-6 text-center">
+                  <TrendingUp className="h-8 w-8 mx-auto mb-2 text-orange-600" />
+                  <p className="font-semibold">Reports & Analytics</p>
+                </CardContent>
+              </Card>
+            </Link>
+          </div>
         </div>
-
-        {/* Quick Links */}
-        <div className="grid md:grid-cols-4 gap-4">
-          <Link href="/society/residents">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardContent className="py-6 text-center">
-                <Users className="h-8 w-8 mx-auto mb-2 text-blue-600" />
-                <p className="font-semibold">Manage Residents</p>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/society/vendors">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardContent className="py-6 text-center">
-                <Package className="h-8 w-8 mx-auto mb-2 text-purple-600" />
-                <p className="font-semibold">Manage Vendors</p>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/society/ledger">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardContent className="py-6 text-center">
-                <FileText className="h-8 w-8 mx-auto mb-2 text-green-600" />
-                <p className="font-semibold">Financial Ledger</p>
-              </CardContent>
-            </Card>
-          </Link>
-
-          <Link href="/society/reports">
-            <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-              <CardContent className="py-6 text-center">
-                <TrendingUp className="h-8 w-8 mx-auto mb-2 text-orange-600" />
-                <p className="font-semibold">Reports & Analytics</p>
-              </CardContent>
-            </Card>
-          </Link>
-        </div>
-      </div>
-    </DashboardLayout>
+      </DashboardLayout>
+    </ProtectedRoute>
   );
 }

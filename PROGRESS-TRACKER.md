@@ -391,13 +391,18 @@ Backend API is now functional with Express server. Frontend UI is complete with 
 - [x] Society admin endpoints
 - [x] Docker infrastructure
 
-### 🔄 Sprint 3: Integration (Next)
-- [ ] Connect frontend auth to backend API
-- [ ] Implement session management
-- [ ] Protected route middleware
-- [ ] API error handling
-- [ ] Loading states
-- [ ] Toast notifications
+### ✅ Sprint 3: API Integration (Complete - 2026-02-20)
+- [x] Connect frontend auth to backend API
+- [x] Implement session management
+- [x] Protected route middleware
+- [x] API error handling
+- [x] Loading states
+- [x] Role conversion (backend snake_case to frontend UPPER_CASE)
+- [x] Society dashboard with real data
+- [x] Resident dashboard with real data
+- [x] Clean empty states for new societies
+- [x] Session restoration on page reload
+- [x] Automatic redirects based on user role
 
 ### ⏳ Sprint 4: Feature Completion
 - [ ] Complete all dashboard features
@@ -465,25 +470,29 @@ cd backend && npx prisma studio
 
 ## Notes
 
-- Backend APIs are functional but need frontend integration
-- Database has sample schema, needs seeding with test data
-- All authentication currently uses JWT tokens
-- CORS is configured for localhost:3000
-- Environment variables stored in backend/.env
-- Frontend uses mock data until API integration
+- ✅ Backend APIs fully functional and integrated with frontend
+- ✅ Authentication working with JWT tokens (24h expiry, 30min timeout)
+- ✅ CORS configured for localhost:3000
+- ✅ Role-based access control implemented
+- ✅ Session persistence across page reloads
+- ✅ Protected routes with automatic redirects
+- ✅ Clean empty states for new societies
+- Database has schema, needs more test data for full feature testing
+- Frontend shows real API data for dashboards
 - No AI attribution in commits (per project requirements)
 
 ---
 
-## Next Steps
+## Next Steps (Sprint 4)
 
-1. **Test Backend APIs**: Use Postman/Thunder Client to test all endpoints
-2. **Create Test Users**: Seed database with test accounts for each role
-3. **API Integration**: Connect frontend auth forms to backend
-4. **Protected Routes**: Implement middleware for role-based access
-5. **Error Handling**: Add proper error messages and validation
-6. **Loading States**: Add spinners and skeleton screens
-7. **Notifications**: Implement toast messages for user feedback
+1. **Society Details Management**: Form to update society information
+2. **Resident Management**: Add, invite, and manage residents
+3. **Vendor Management**: Approve/reject vendors, manage partnerships
+4. **Service Booking Flow**: Complete end-to-end booking experience
+5. **Financial Ledger**: Income/expense tracking and reports
+6. **Voting System**: Create proposals, vote, view results
+7. **Complaints System**: Raise, track, and resolve complaints
+8. **Notifications**: Real-time updates and alerts
 
 ---
 
