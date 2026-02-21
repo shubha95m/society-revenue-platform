@@ -25,7 +25,7 @@ async function main() {
     if (existingAdmin) {
       console.log('✅ Platform admin already exists:');
       console.log(`   Email: ${existingAdmin.email}`);
-      console.log(`   Name: ${existingAdmin.name}`);
+      console.log(`   Name: ${existingAdmin.first_name} ${existingAdmin.last_name}`);
       console.log(`   Role: ${existingAdmin.role}`);
       console.log(`   ID: ${existingAdmin.id}\n`);
       return;
@@ -34,13 +34,19 @@ async function main() {
     // Hash password
     const passwordHash = await bcrypt.hash(adminPassword, 10);
 
+    // Split name
+    const nameParts = adminName.split(' ');
+    const firstName = nameParts[0];
+    const lastName = nameParts.slice(1).join(' ') || 'Admin';
+
     // Create platform admin
     const admin = await prisma.users.create({
       data: {
         id: crypto.randomUUID(),
         email: adminEmail,
         password_hash: passwordHash,
-        name: adminName,
+        first_name: firstName,
+        last_name: lastName,
         role: 'platform_admin',
         status: 'active',
       },
@@ -52,7 +58,8 @@ async function main() {
     console.log(`   Password: ${adminPassword}`);
     console.log(`   Role: ${admin.role}`);
     console.log(`   ID: ${admin.id}\n`);
-    console.log('🔗 Login URL: http://localhost:3000/login\n');
+    console.log('🔗 Login URL: http://localhost:3000/admin/login\n');
+    console.log('🔗 Regular Login URL: http://localhost:3000/login\n');
 
   } catch (error) {
     console.error('❌ Error creating admin user:', error);

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-import { hashPassword, createSession } from '../lib/auth';
+import { hashPassword, createSession, createToken } from '../lib/auth';
 
 const router = Router();
 
@@ -79,7 +79,6 @@ router.post('/register', async (req: Request, res: Response) => {
         data: {
           id: crypto.randomUUID(),
           email: adminEmail,
-          phone: adminPhone,
           password_hash: passwordHash,
           first_name: firstName,
           last_name: lastName,
@@ -114,8 +113,13 @@ router.post('/register', async (req: Request, res: Response) => {
       return { user, society };
     });
 
-    // Create session
-    const session = await createSession(result.user.id, result.user.role);
+    // Create session and token
+    const session = createSession({
+      id: result.user.id,
+      email: result.user.email,
+      role: result.user.role as any,
+    });
+    const token = await createToken(session);
 
     res.status(201).json({
       success: true,
@@ -133,7 +137,11 @@ router.post('/register', async (req: Request, res: Response) => {
           slug: result.society.slug,
           status: result.society.status,
         },
-        session,
+        session: {
+          token,
+          expiresAt: session.expiresAt,
+          lastActivityAt: session.lastActivityAt,
+        },
       },
     });
   } catch (error: any) {

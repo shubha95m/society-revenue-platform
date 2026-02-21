@@ -67,11 +67,27 @@ import authRoutes from './routes/auth.routes';
 import residentRoutes from './routes/resident.routes';
 import societyRoutes from './routes/society.routes';
 import societyRegistrationRoutes from './routes/society-registration.routes';
+import vendorRoutes from './routes/vendor.routes';
+import adminRoutes from './routes/admin.routes';
+import complaintsRoutes from './routes/complaints.routes';
+import votesRoutes from './routes/votes.routes';
+import noticesRoutes from './routes/notices.routes';
+import amenitiesRoutes from './routes/amenities.routes';
+import ledgerRoutes from './routes/ledger.routes';
+import ordersRoutes from './routes/orders.routes';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/resident', residentRoutes);
 app.use('/api/society', societyRoutes);
 app.use('/api/society-registration', societyRegistrationRoutes);
+app.use('/api/vendor', vendorRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/complaints', complaintsRoutes);
+app.use('/api/votes', votesRoutes);
+app.use('/api/notices', noticesRoutes);
+app.use('/api/amenities', amenitiesRoutes);
+app.use('/api/ledger', ledgerRoutes);
+app.use('/api/orders', ordersRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

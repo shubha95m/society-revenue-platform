@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx prisma generate:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(docker exec:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
+    ],
+    "deny": [],
+    "ask": [],
+    "never add powered by claude for this repo or powered by AI": true
+  }
+}

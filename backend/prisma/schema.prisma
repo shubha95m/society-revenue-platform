@@ -22,10 +22,13 @@ enum user_status {
 }
 
 enum society_status {
+  pending
+  approved
   active
   onboarding
   suspended
   inactive
+  rejected
 }
 
 model users {
@@ -73,6 +76,8 @@ model societies {
 
   residents              residents[]
   service_societies      service_societies[]
+  contracts              contracts[]
+  amenities              amenities[] @relation("SocietyAmenities")
 }
 
 model residents {
@@ -86,10 +91,11 @@ model residents {
   created_at     DateTime @default(now())
   updated_at     DateTime @updatedAt
 
-  users          users      @relation(fields: [user_id], references: [id])
-  societies      societies  @relation(fields: [society_id], references: [id])
-  orders         orders[]
-  complaints     complaints[]
+  users                users               @relation(fields: [user_id], references: [id])
+  societies            societies           @relation(fields: [society_id], references: [id])
+  orders               orders[]
+  complaints           complaints[]
+  amenity_bookings     amenity_bookings[]  @relation("ResidentBookings")
 }
 
 model vendors {
@@ -99,6 +105,8 @@ model vendors {
   business_type     String?
   phone             String?
   gst_number        String?
+  city              String?
+  state             String?
   status            String
   created_at        DateTime @default(now())
   updated_at        DateTime @updatedAt
@@ -106,6 +114,7 @@ model vendors {
   users             users    @relation(fields: [user_id], references: [id])
   services          services[]
   orders            orders[]
+  contracts         contracts[]
 }
 
 model services {
@@ -123,6 +132,7 @@ model services {
   vendors        vendors  @relation(fields: [vendor_id], references: [id])
   orders         orders[]
   service_societies service_societies[]
+  contracts      contracts[]
 }
 
 model service_societies {
@@ -137,21 +147,24 @@ model service_societies {
 }
 
 model orders {
-  id             String   @id @db.Uuid
-  resident_id    String   @db.Uuid
-  service_id     String   @db.Uuid
-  vendor_id      String   @db.Uuid
-  order_number   String   @unique
-  description    String?
-  total_amount   Decimal  @db.Decimal(10, 2)
-  status         String
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  id              String    @id @db.Uuid
+  resident_id     String    @db.Uuid
+  service_id      String    @db.Uuid
+  vendor_id       String    @db.Uuid
+  order_number    String    @unique
+  description     String?
+  total_amount    Decimal   @db.Decimal(10, 2)
+  status          String
+  payment_status  String?   @default("pending")
+  scheduled_date  DateTime?
+  completed_at    DateTime?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
 
-  residents      residents @relation(fields: [resident_id], references: [id])
-  services       services  @relation(fields: [service_id], references: [id])
-  vendors        vendors   @relation(fields: [vendor_id], references: [id])
-  transactions   transactions[]
+  residents       residents @relation(fields: [resident_id], references: [id])
+  services        services  @relation(fields: [service_id], references: [id])
+  vendors         vendors   @relation(fields: [vendor_id], references: [id])
+  transactions    transactions[]
 }
 
 model transactions {
@@ -167,14 +180,131 @@ model transactions {
 }
 
 model complaints {
-  id             String   @id @db.Uuid
-  resident_id    String   @db.Uuid
-  subject        String
-  description    String?
-  status         String
-  priority       String?
-  created_at     DateTime @default(now())
-  updated_at     DateTime @updatedAt
+  id                String    @id @db.Uuid
+  complaint_number  String    @unique
+  society_id        String    @db.Uuid
+  resident_id       String    @db.Uuid
+  title             String
+  subject           String
+  description       String?
+  category          String?
+  status            String
+  priority          String?
+  resolution_notes  String?
+  resolved_at       DateTime?
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
 
-  residents      residents @relation(fields: [resident_id], references: [id])
+  residents         residents @relation(fields: [resident_id], references: [id])
+}
+
+model contracts {
+  id              String    @id @db.Uuid
+  vendor_id       String    @db.Uuid
+  society_id      String    @db.Uuid
+  service_id      String    @db.Uuid
+  status          String    @default("pending")
+  terms           String?
+  start_date      DateTime?
+  end_date        DateTime?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  vendors         vendors   @relation(fields: [vendor_id], references: [id])
+  societies       societies @relation(fields: [society_id], references: [id])
+  services        services  @relation(fields: [service_id], references: [id])
+}
+
+model proposals {
+  id           String    @id @db.Uuid
+  society_id   String    @db.Uuid
+  title        String
+  description  String?
+  type         String
+  status       String    @default("pending")
+  start_date   DateTime
+  end_date     DateTime
+  created_by   String    @db.Uuid
+  created_at   DateTime  @default(now())
+  updated_at   DateTime  @updatedAt
+
+  votes        votes[]
+}
+
+model votes {
+  id          String   @id @db.Uuid
+  proposal_id String   @db.Uuid
+  resident_id String   @db.Uuid
+  vote_value  String
+  created_at  DateTime @default(now())
+
+  proposals   proposals @relation(fields: [proposal_id], references: [id])
+
+  @@unique([proposal_id, resident_id])
+}
+
+model notices {
+  id             String    @id @db.Uuid
+  society_id     String    @db.Uuid
+  title          String
+  content        String
+  category       String
+  priority       String    @default("normal")
+  status         String    @default("active")
+  published_at   DateTime?
+  created_by     String    @db.Uuid
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+}
+
+model amenities {
+  id              String   @id @db.Uuid
+  society_id      String   @db.Uuid
+  name            String
+  description     String?
+  amenity_type    String
+  booking_type    String
+  price_per_hour  Decimal? @db.Decimal(10, 2)
+  price_per_day   Decimal? @db.Decimal(10, 2)
+  available_slots String?
+  rules           String?
+  status          String   @default("active")
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  societies        societies @relation("SocietyAmenities", fields: [society_id], references: [id])
+  amenity_bookings amenity_bookings[]
+}
+
+model amenity_bookings {
+  id             String    @id @db.Uuid
+  amenity_id     String    @db.Uuid
+  resident_id    String    @db.Uuid
+  booking_date   DateTime
+  start_time     String?
+  end_time       String?
+  duration_hours Decimal?  @db.Decimal(5, 2)
+  total_amount   Decimal   @db.Decimal(10, 2)
+  status         String    @default("pending")
+  payment_status String?   @default("pending")
+  created_at     DateTime  @default(now())
+  updated_at     DateTime  @updatedAt
+
+  amenities      amenities @relation(fields: [amenity_id], references: [id])
+  residents      residents @relation("ResidentBookings", fields: [resident_id], references: [id])
+}
+
+model ledger_entries {
+  id               String   @id @db.Uuid
+  society_id       String   @db.Uuid
+  entry_type       String
+  category         String
+  amount           Decimal  @db.Decimal(12, 2)
+  description      String?
+  reference_number String?  @unique
+  transaction_date DateTime
+  payment_method   String?
+  created_by       String   @db.Uuid
+  created_at       DateTime @default(now())
+  updated_at       DateTime @updatedAt
 }
